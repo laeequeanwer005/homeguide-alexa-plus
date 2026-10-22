@@ -1,336 +1,248 @@
-\# HomeGuide — Local AI Home Troubleshooting Assistant
+# HomeGuide — Local AI Home Manual Assistant
 
+HomeGuide is a local-first AI assistant designed to help users understand and troubleshoot household appliances using their manuals. It combines a React frontend, a FastAPI backend, a locally hosted language model through Ollama, and Model Context Protocol (MCP) tools.
 
+The goal is to make appliance information easier to search and understand while keeping document processing and AI inference local.
 
-\*\*Track:\*\* Amazon Developer Hackathon 2026 — Alexa+  
+> **Project status:** Local AI answering and MCP smoke tests pass. Alexa+ integration and hackathon eligibility must be verified separately.
 
-\*\*Project status:\*\* Local AI and MCP workflow implemented; Alexa+ integration must be verified separately.
+## Features
 
+- **Manual-based question answering:** Ask questions about household appliances using uploaded manuals.
+- **Local AI inference:** Uses Ollama with `qwen2.5:3b` to generate answers locally.
+- **Document search:** Extracts and searches text from supported PDF, TXT, and Markdown documents.
+- **Source references:** Returns source information associated with retrieved document content.
+- **MCP tools:** Exposes manual listing, document search, and question-answering capabilities through an MCP server.
+- **React interface:** Provides a web interface for interacting with the assistant and uploading manuals.
+- **Local-first design:** Avoids sending document questions to a remote LLM API in the configured local inference workflow.
 
-
-\## 1. Overview
-
-
-
-HomeGuide is a home-appliance troubleshooting assistant that searches uploaded manuals and uses a locally running language model to provide concise, source-grounded answers.
-
-
-
-Its goal is to help users find relevant instructions without sending document content to a hosted LLM provider.
-
-
-
-\## 2. Key Features
-
-
-
-\- \*\*Local AI inference:\*\* Uses Ollama with Qwen 2.5 3B.
-
-\- \*\*Manual upload:\*\* Supports PDF, TXT, and Markdown documents through the existing backend.
-
-\- \*\*Document retrieval:\*\* Searches stored manual text for relevant passages.
-
-\- \*\*Source attribution:\*\* Returns filenames and retrieval metadata with answers.
-
-\- \*\*MCP tools:\*\* Exposes manual listing, manual search, and question answering.
-
-\- \*\*Web interface:\*\* React and Vite frontend.
-
-\- \*\*Local API:\*\* FastAPI backend.
-
-\- \*\*Safety-conscious responses:\*\* Encourages users to consult actual manufacturer instructions and qualified technicians for hazardous or internal repairs.
-
-
-
-\## 3. Architecture
-
-
-
-```text
-
-React + Vite frontend
-
-&#x20;       |
-
-&#x20;       v
-
-FastAPI backend (port 8000)
-
-&#x20;       |
-
-&#x20;       +--> Document upload and extraction
-
-&#x20;       |
-
-&#x20;       +--> Manual retrieval
-
-&#x20;       |
-
-&#x20;       +--> Ollama API (Qwen 2.5 3B)
-
-&#x20;       |
-
-&#x20;       +--> MCP server (port 8001)
-
-&#x20;                 |
-
-&#x20;                 +--> list\_home\_manuals
-
-&#x20;                 +--> search\_home\_manuals
-
-&#x20;                 +--> ask\_homeguide
-
-```
-
-
-
-The backend and MCP server use the same local document store and answer engine.
-
-
-
-\## 4. Technology Stack
-
-
+## Technology Stack
 
 | Component | Technology |
-
 |---|---|
+| Frontend | React, Vite, JavaScript, CSS |
+| Backend API | Python, FastAPI |
+| AI inference | Ollama |
+| Language model | `qwen2.5:3b` |
+| Document processing | PyMuPDF / PyPDF, as configured |
+| Agent tools | Model Context Protocol (MCP) |
+| Testing | Python smoke tests |
 
-| Frontend | React, Vite, JavaScript |
+## Architecture
 
-| Backend | Python, FastAPI |
-
-| AI inference | Ollama, Qwen 2.5 3B |
-
-| Document processing | pypdf and text extraction |
-
-| Tool interface | Model Context Protocol (MCP) |
-
-| Local storage | Filesystem-based document storage |
-
-
-
-\## 5. Prerequisites
-
-
-
-Install the following:
-
-
-
-\- Python and the project's backend virtual environment
-
-\- Node.js and npm
-
-\- Ollama
-
-\- The `qwen2.5:3b` model
-
-
-
-Download the model if it is not already installed:
+```text
+User
+  |
+  v
+React + Vite Frontend
+  |
+  v
+FastAPI Backend (:8000)
+  |
+  +---- Document extraction and search
+  |
+  +---- Local AI agent
+  |        |
+  |        v
+  |      Ollama (:11434)
+  |        |
+  |        v
+  |      qwen2.5:3b
+  |
+  v
+Answers and source references
 
 
+MCP Client
+  |
+  v
+MCP Server (:8001)
+  |
+  +---- list_home_manuals
+  +---- search_home_manuals
+  +---- ask_homeguide
+```
 
-```powershell
+## Prerequisites
 
+Install the following before running HomeGuide:
+
+- Python 3.11 or another version compatible with the installed backend dependencies.
+- Node.js and npm.
+- [Ollama](https://ollama.com/).
+- Git.
+
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/laeequeanwer005/homeguide-alexa-plus.git
+cd homeguide-alexa-plus
+```
+
+### 2. Download the local AI model
+
+Make sure Ollama is installed and running, then execute:
+
+```bash
 ollama pull qwen2.5:3b
-
 ```
 
+Verify the model is available:
 
-
-Check that it is available:
-
-
-
-```powershell
-
+```bash
 ollama list
-
 ```
 
+### 3. Set up the backend
 
+Open a terminal in the project root.
 
-\## 6. Run HomeGuide on Windows
-
-
-
-Open PowerShell.
-
-
-
-\### Start all services
-
-
-
-If the startup script has been created:
-
-
+**Windows PowerShell:**
 
 ```powershell
+cd backend
 
-cd C:\\HomeGuide
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-
-.\\start-homeguide.ps1
-
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
+If PowerShell blocks activation, use the virtual environment's Python executable directly:
 
-
-Ensure Ollama is running and stop duplicate backend or MCP processes before starting the script.
-
-
-
-\### Service URLs
-
-
-
-\- Frontend: http://localhost:5173
-
-\- Backend API documentation: http://127.0.0.1:8000/docs
-
-\- MCP endpoint: http://127.0.0.1:8001/mcp
-
-
-
-The MCP endpoint is a protocol endpoint, not a conventional webpage.
-
-
-
-\## 7. MCP Tools
-
-
-
-\### `list\_home\_manuals`
-
-
-
-Lists manuals currently stored by HomeGuide.
-
-
-
-\### `search\_home\_manuals`
-
-
-
-Searches uploaded manuals for passages relevant to a question.
-
-
-
-Input:
-
-
-
-```json
-
-{
-
-&#x20; "question": "What should I check if my washing machine does not start?"
-
-}
-
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
+### 4. Set up the frontend
 
+Open another terminal:
 
-\### `ask\_homeguide`
-
-
-
-Retrieves relevant manual passages and asks the local model to produce an answer grounded in that context.
-
-
-
-Input:
-
-
-
-```json
-
-{
-
-&#x20; "question": "What should I check if my washing machine does not start?"
-
-}
-
+```powershell
+cd frontend
+npm install
 ```
 
+## Running HomeGuide
 
+Keep Ollama running. Start the following services in separate terminals.
 
-All three tool names are part of the existing implementation and should remain stable.
+### Terminal 1 — FastAPI backend
 
+From the project root:
 
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
 
-\## 8. Privacy
+### Terminal 2 — MCP server
 
+From the project root:
 
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.mcp_server
+```
 
-HomeGuide is designed for local inference. When the local Ollama model and local services are used, inference does not require sending the prompt to a hosted LLM provider.
+The configured MCP endpoint is:
 
+```text
+http://127.0.0.1:8001/mcp
+```
 
+### Terminal 3 — React frontend
 
-This does not automatically guarantee that every part of the application is offline: installation, model downloads, browser resources, or future integrations may use the network. Users should review any connected services before uploading sensitive documents.
+From the project root:
 
+```powershell
+cd frontend
+npm run dev
+```
 
+Open the local URL printed by Vite, typically:
 
-\## 9. Safety and Limitations
+```text
+http://localhost:5173
+```
 
+### Optional — PowerShell launcher
 
+The project includes `start-homeguide.ps1` for launching the local services. Review the script before running it and ensure Ollama is available.
 
-\- Answers depend on the contents and quality of uploaded manuals.
+## MCP Tools
 
-\- Retrieval results may be incomplete or irrelevant.
+The MCP server exposes these tools:
 
-\- Source citations indicate retrieved documents; they do not independently verify that an answer is correct.
+| Tool | Purpose |
+|---|---|
+| `list_home_manuals` | Lists available home appliance manuals. |
+| `search_home_manuals` | Searches manual content for relevant information. |
+| `ask_homeguide` | Answers a question using retrieved manual content and the configured local AI model. |
 
-\- Users should consult the actual manufacturer manual for model-specific instructions.
+MCP clients must support the configured Streamable HTTP transport and be able to reach the MCP endpoint.
 
-\- Do not attempt internal electrical, gas, or other hazardous repairs based solely on AI guidance.
+## Supported Documents
 
-\- The current local implementation should not be represented as a certified repair system.
+HomeGuide's document service is configured to handle:
 
+- PDF (`.pdf`)
+- Plain text (`.txt`)
+- Markdown (`.md`)
 
+The quality of the answer depends on the text extracted from the document, the relevance of retrieved passages, and the language model's response.
 
-\## 10. Demo Walkthrough
+## Testing
 
+Run the backend smoke tests from the project root:
 
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m tests.smoke_test
+```
 
-1\. Open the HomeGuide interface.
+The smoke test checks:
 
-2\. Upload a sample appliance manual.
+1. Local Ollama availability and model installation.
+2. Local AI answer generation.
+3. MCP tool availability.
+4. Question answering through MCP, including source information.
 
-3\. Ask a question covered by the manual.
+A successful run ends with:
 
-4\. Show the answer and its source filename.
+```text
+ALL HOMEGUIDE SMOKE TESTS PASSED.
+```
 
-5\. Ask a question not covered by the manual and demonstrate the unknown-information behavior.
+## Privacy and Limitations
 
-6\. Demonstrate the three MCP tools using an MCP client.
+- AI inference is configured to run locally through Ollama.
+- Documents are stored in the local backend data directory.
+- Do not upload confidential manuals or personal information to a public repository.
+- Review all source files and configuration before publishing to verify that no credentials or sensitive data are included.
+- Generated answers can be inaccurate or incomplete. Always consult the manufacturer's instructions for safety-critical procedures.
+- Local smoke tests do not establish that Alexa+ integration is complete or that the project meets every hackathon requirement.
 
-7\. Explain how local inference supports privacy.
+## Roadmap
 
+- Improve document retrieval and answer grounding.
+- Add additional appliance manuals and test cases.
+- Improve error handling and user feedback.
+- Prepare a reproducible demonstration workflow.
+- Verify and implement the required Alexa+ integration.
+- Validate the final project against the official hackathon rules.
 
+## Contributing
 
-\## 11. Hackathon Integration Status
+Contributions and suggestions are welcome. Please open an issue to discuss significant changes before submitting a pull request.
 
+## License
 
+No license has been selected yet. Until a license is added, do not assume that the repository grants permission to reuse, modify, or redistribute the code.
 
-HomeGuide has a local AI answer engine and a working MCP implementation with three tools.
+---
 
-
-
-\*\*MCP support alone does not prove that Alexa+ integration is complete.\*\* Before claiming Alexa+ compatibility, verify the current hackathon requirements and demonstrate the required integration using the permitted method.
-
-
-
-\## 12. Project Goals
-
-
-
-HomeGuide aims to make household troubleshooting more accessible by combining local AI, manual retrieval, source attribution, and a clear interface.
-
-
-
+**HomeGuide** — Making home appliance knowledge easier to access with local AI.
